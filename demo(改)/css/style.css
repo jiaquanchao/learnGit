@@ -1,0 +1,62 @@
+.line-item {
+    float: left;
+    width: 33%;
+    text-align: center;
+}
+
+.line {
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.input-date {
+    width: 100px;
+    margin: 0 auto;
+}
+
+.btn-line {
+    padding-left: 40px;
+    padding-right: 40px;
+}
+
+.guagel-title{
+    display: block;
+    text-align: center;
+    font-size:30px;
+}
+.guagel-box {
+    float: left;
+    width: 25%;
+    overflow: hidden;
+}
+
+.gaugel-span {
+    float: left;
+    width: 100%;
+    font-size: 20px;
+    text-align: center
+}
+
+.gaugel {
+    width: 200px;
+    height: 200px;
+    margin:0 auto;
+}
+.table-left{
+    float: left;
+    width: 40%;
+}
+.table-span{
+    display: block;
+    font-size: 30px;
+    text-align: center;
+}
+.line-right{
+    float: left;
+    width: 60%;
+}
+.line-span{
+    display: block;
+    font-size: 30px;
+    text-align: center;
+}

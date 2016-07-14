@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>OEE设备</title>
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="font-awesome-4.4.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="all" href="css/daterangepicker-bs3.css" />
+
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="js/jquery.min.js"></script>
+  <!--  <script type="text/javascript" src="js/bootstrap.min.js">
+    </script>-->
+	<script src="//cdn.bootcss.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	
+    <script type="text/javascript" src="js/moment.js">
+    </script>
+    <script type="text/javascript" src="js/daterangepicker.js">
+    </script>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <script src="js/dist/echarts.js"></script>
+</head>
+
+<body>
+    <div>
+        <h1 align="center">设备OEE监测</h1>
+    </div>
+
+    <div class="line dropdown">
+        <div class="line-item">
+            <span>设备号：</span>
+            <select id="device">
+                <option>1</option>
+                <option>2</option>
+            </select>
+        </div>
+
+        <div class="line-item">
+            <span>班组：</span>
+            <select id="group">
+                <option>1</option>
+                <option>2</option>
+            </select>
+        </div>
+
+        <div class="line-item">
+            <span>操作员:</span>
+            <select id="operator">
+                <option>1</option>
+                <option>2</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="line">
+        <div class="line-item">
+
+            <div class="input-prepend input-group input-date">
+                <span class="add-on input-group-addon">
+                        <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>
+                    </span>
+                <input type="text" style="width: 200px" name="data_time" id="data_time" class="form-control" value="02/18/2016 - 02/23/2016" />
+            </div>
+
+        </div>
+
+        <div class="line-item btn-line">
+            <button type="button" class="btn btn-primary btn-block" onclick="freshData()">刷新</button>
+        </div>
+
+
+        <div class="line-item btn-line">
+            <button type="button" class="btn btn-primary btn-block">总体</button>
+        </div>
+
+    </div>
+    <div class="line">
+        <div class="guagel-box">
+            <span class="gaugel-span">设备OEE</span>
+            <div id="gauge1" class="gaugel"></div>
+        </div>
+        <div class="guagel-box">
+            <span class="gaugel-span">时间利用率</span>
+            <div id="gauge2" class="gaugel"></div>
+        </div>
+
+        <div class="guagel-box">
+            <span class="gaugel-span">性能效率</span>
+            <div id="gauge3" class="gaugel"></div>
+        </div>
+
+        <div class="guagel-box">
+            <span class="gaugel-span">良品率</span>
+            <div id="gauge4" class="gaugel"></div>
+        </div>
+    </div>
+
+    <div class="line">
+        <div class="table-left">
+            <span class="table-span">表格标题</span>
+            <table class="table table-condensed">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>设备OEE</th>
+                        <th>时间利用率</th>
+                        <th>性能效率</th>
+                        <th>良品率</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">1</th>
+                        <td>Mark</td>
+                        <td>Otto</td>
+                        <td>@mdo</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">2</th>
+                        <td>Jacob</td>
+                        <td>Thornton</td>
+                        <td>@fat</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">3</th>
+                        <td colspan="2">Larry the Bird</td>
+                        <td>@twitter</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="line-right">
+            <span class="line-span">折线图标题</span>
+            <div id="line1" style="height:400px;weight:400px"></div>
+        </div>
+
+    </div>
+
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#reservation').daterangepicker(null,
+                function (start, end, label) {
+                    console.log(start.toISOString(), end.toISOString(), label);
+                });
+        });
+    </script>
+
+    <script type="text/javascript">
+        // 路径配置
+        require.config({
+            paths: {
+                echarts: './js/dist'
+            }
+        });
+
+        // 使用
+        require(
+            [
+                'echarts',
+                'echarts/chart/gauge' // 使用柱状图就加载bar模块，按需加载
+            ],
+            function (ec) {
+                // 基于准备好的dom，初始化echarts图表
+                var myChart = ec.init(document.getElementById('gauge1'));
+
+                option = {
+                    tooltip: {
+                        formatter: "{a} <br/>{b} : {c}%"
+                    },
+                    series: [
+                        {
+                            name: '业务指标',
+                            type: 'gauge',
+                            splitNumber: 10, // 分割段数，默认为5
+                            axisLine: { // 坐标轴线
+                                lineStyle: { // 属性lineStyle控制线条样式
+                                    color: [[0.2, '#228b22'], [0.8, '#48b'], [1, '#ff4500']],
+                                    width: 8
+                                }
+                            },
+                            axisTick: { // 坐标轴小标记
+                                splitNumber: 10, // 每份split细分多少段
+                                length: 12, // 属性length控制线长
+                                lineStyle: { // 属性lineStyle控制线条样式
+                                    color: 'auto'
+                                }
+                            },
+                            axisLabel: { // 坐标轴文本标签，详见axis.axisLabel
+                                textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                                    color: 'auto'
+                                }
+                            },
+                            splitLine: { // 分隔线
+                                show: true, // 默认显示，属性show控制显示与否
+                                length: 15, // 属性length控制线长
+                                lineStyle: { // 属性lineStyle（详见lineStyle）控制线条样式
+                                    color: 'auto'
+                                }
+                            },
+                            pointer: {
+                                width: 5
+                            },
+                            title: {
+                                show: true,
+                                offsetCenter: [0, '-40%'], // x, y，单位px
+                                textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                                    fontWeight: 'bolder'
+                                }
+                            },
+                            detail: {
+                                formatter: '{value}%',
+                                textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                                    color: 'auto',
+                                    fontWeight: 'bolder'
+                                }
+                            },
+                            data: [{
+                                value: 50,
+                                name: ''
+                            }]
+                        }
+                    ]
+                };
+
+                // 为echarts对象加载数据
+                myChart.setOption(option);
+            }
+        );
+    </script>
+    <script type="text/javascript">
+        // 路径配置
+        require.config({
+            paths: {
+                echarts: './js/dist'
+            }
+        });
+
+        // 使用
+        require(
+            [
+                'echarts',
+                'echarts/chart/gauge' // 使用柱状图就加载bar模块，按需加载
+            ],
+            function (ec) {
+                // 基于准备好的dom，初始化echarts图表
+                var myChart = ec.init(document.getElementById('gauge2'));
+
+                option = {
+                    tooltip: {
+                        formatter: "{a} <br/>{b} : {c}%"
+                    },
+
+                    series: [
+                        {
+                            name: '业务指标',
+                            type: 'gauge',
+                            splitNumber: 10, // 分割段数，默认为5
+                            axisLine: { // 坐标轴线
+                                lineStyle: { // 属性lineStyle控制线条样式
+                                    color: [[0.2, '#228b22'], [0.8, '#48b'], [1, '#ff4500']],
+                                    width: 8
+                                }
+                            },
+                            axisTick: { // 坐标轴小标记
+                                splitNumber: 10, // 每份split细分多少段
+                                length: 12, // 属性length控制线长
+                                lineStyle: { // 属性lineStyle控制线条样式
+                                    color: 'auto'
+                                }
+                            },
+                            axisLabel: { // 坐标轴文本标签，详见axis.axisLabel
+                                textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                                    color: 'auto'
+                                }
+                            },
+                            splitLine: { // 分隔线
+                                show: true, // 默认显示，属性show控制显示与否
+                                length: 15, // 属性length控制线长
+                                lineStyle: { // 属性lineStyle（详见lineStyle）控制线条样式
+                                    color: 'auto'
+                                }
+                            },
+                            pointer: {
+                                width: 5
+                            },
+                            title: {
+                                show: true,
+                                offsetCenter: [0, '-40%'], // x, y，单位px
+                                textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                                    fontWeight: 'bolder'
+                                }
+                            },
+                            detail: {
+                                formatter: '{value}%',
+                                textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                                    color: 'auto',
+                                    fontWeight: 'bolder'
+                                }
+                            },
+                            data: [{
+                                value: 50,
+                                name: ''
+                            }]
+                        }
+                    ]
+                };
+
+                // 为echarts对象加载数据
+                myChart.setOption(option);
+            }
+        );
+    </script>
+    <script type="text/javascript">
+        // 路径配置
+        require.config({
+            paths: {
+                echarts: './js/dist'
+            }
+        });
+
+        // 使用
+        require(
+            [
+                'echarts',
+                'echarts/chart/gauge' // 使用柱状图就加载bar模块，按需加载
+            ],
+            function (ec) {
+                // 基于准备好的dom，初始化echarts图表
+                var myChart = ec.init(document.getElementById('gauge3'));
+
+                option = {
+                    tooltip: {
+                        formatter: "{a} <br/>{b} : {c}%"
+                    },
+                    series: [
+                        {
+                            name: '业务指标',
+                            type: 'gauge',
+                            splitNumber: 10, // 分割段数，默认为5
+                            axisLine: { // 坐标轴线
+                                lineStyle: { // 属性lineStyle控制线条样式
+                                    color: [[0.2, '#228b22'], [0.8, '#48b'], [1, '#ff4500']],
+                                    width: 8
+                                }
+                            },
+                            axisTick: { // 坐标轴小标记
+                                splitNumber: 10, // 每份split细分多少段
+                                length: 12, // 属性length控制线长
+                                lineStyle: { // 属性lineStyle控制线条样式
+                                    color: 'auto'
+                                }
+                            },
+                            axisLabel: { // 坐标轴文本标签，详见axis.axisLabel
+                                textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                                    color: 'auto'
+                                }
+                            },
+                            splitLine: { // 分隔线
+                                show: true, // 默认显示，属性show控制显示与否
+                                length: 15, // 属性length控制线长
+                                lineStyle: { // 属性lineStyle（详见lineStyle）控制线条样式
+                                    color: 'auto'
+                                }
+                            },
+                            pointer: {
+                                width: 5
+                            },
+                            title: {
+                                show: true,
+                                offsetCenter: [0, '-40%'], // x, y，单位px
+                                textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                                    fontWeight: 'bolder'
+                                }
+                            },
+                            detail: {
+                                formatter: '{value}%',
+                                textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                                    color: 'auto',
+                                    fontWeight: 'bolder'
+                                }
+                            },
+                            data: [{
+                                value: 50,
+                                name: ''
+                            }]
+                        }
+                    ]
+                };
+
+                // 为echarts对象加载数据
+                myChart.setOption(option);
+            }
+        );
+    </script>
+    <script type="text/javascript">
+        // 路径配置
+        require.config({
+            paths: {
+                echarts: './js/dist'
+            }
+        });
+
+        // 使用
+        require(
+            [
+                'echarts',
+                'echarts/chart/gauge' // 使用柱状图就加载bar模块，按需加载
+            ],
+            function (ec) {
+                // 基于准备好的dom，初始化echarts图表
+                var myChart = ec.init(document.getElementById('gauge4'));
+
+                option = {
+                    tooltip: {
+                        formatter: "{a} <br/>{b} : {c}%"
+                    },
+                    series: [
+                        {
+                            name: '业务指标',
+                            type: 'gauge',
+                            splitNumber: 10, // 分割段数，默认为5
+                            axisLine: { // 坐标轴线
+                                lineStyle: { // 属性lineStyle控制线条样式
+                                    color: [[0.2, '#228b22'], [0.8, '#48b'], [1, '#ff4500']],
+                                    width: 8
+                                }
+                            },
+                            axisTick: { // 坐标轴小标记
+                                splitNumber: 10, // 每份split细分多少段
+                                length: 12, // 属性length控制线长
+                                lineStyle: { // 属性lineStyle控制线条样式
+                                    color: 'auto'
+                                }
+                            },
+                            axisLabel: { // 坐标轴文本标签，详见axis.axisLabel
+                                textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                                    color: 'auto'
+                                }
+                            },
+                            splitLine: { // 分隔线
+                                show: true, // 默认显示，属性show控制显示与否
+                                length: 15, // 属性length控制线长
+                                lineStyle: { // 属性lineStyle（详见lineStyle）控制线条样式
+                                    color: 'auto'
+                                }
+                            },
+                            pointer: {
+                                width: 5
+                            },
+                            title: {
+                                show: true,
+                                offsetCenter: [0, '-40%'], // x, y，单位px
+                                textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                                    fontWeight: 'bolder'
+                                }
+                            },
+                            detail: {
+                                formatter: '{value}%',
+                                textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                                    color: 'auto',
+                                    fontWeight: 'bolder'
+                                }
+                            },
+                            data: [{
+                                value: 50,
+                                name: ''
+                            }]
+                        }
+                    ]
+                };
+
+                // 为echarts对象加载数据
+                myChart.setOption(option);
+            }
+        );
+    </script>
+    <script type="text/javascript">
+        // 路径配置
+        require.config({
+            paths: {
+                echarts: './js/dist'
+            }
+        });
+
+        // 使用
+        require(
+            [
+                'echarts',
+                'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+            ],
+            function (ec) {
+                // 基于准备好的dom，初始化echarts图表
+                var myChart = ec.init(document.getElementById('line1'));
+
+                option = {
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    legend: {
+                        data: ['设备OEE', '时间利用率', '性能效率', '良品率']
+                    },
+                    calculable: true,
+                    xAxis: [
+                        {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+                        }
+                    ],
+                    yAxis: [
+                        {
+                            type: 'value'
+                        }
+                    ],
+                    series: [
+                        {
+                            name: '设备OEE',
+                            type: 'line',
+                            stack: '总量',
+                            data: [120, 132, 101, 134, 90, 230, 210]
+                        },
+                        {
+                            name: '时间利用率',
+                            type: 'line',
+                            stack: '总量',
+                            data: [220, 182, 191, 234, 290, 330, 310]
+                        },
+                        {
+                            name: '性能效率',
+                            type: 'line',
+                            stack: '总量',
+                            data: [150, 232, 201, 154, 190, 330, 410]
+                        },
+                        {
+                            name: '良品率',
+                            type: 'line',
+                            stack: '总量',
+                            data: [320, 332, 301, 334, 390, 330, 320]
+                        },
+                    ]
+                };
+
+
+                // 为echarts对象加载数据
+                myChart.setOption(option);
+            }
+        );
+    </script>
+<script>
+    function freshData(){
+        var deviceId=   $("#device").val();
+        var groupId =  $("#group").val();
+        var operatorId =  $("#operator").val();
+        var dataTime = $("#data_time").val();
+        $.ajax( {
+            url:'productManager_reverseUpdate',// 跳转到 action
+            data:{
+                deviceId : deviceId,
+                groupId : groupId,
+                operatorId : operatorId,
+                dataTime : dataTime
+            },
+            type:'post',
+            cache:false,
+            dataType:'json',
+            success:function(data) {
+                if(data.msg =="true" ){
+                    // view("修改成功！");
+                    alert("修改成功！");
+                    window.location.reload();
+                }else{
+                    view(data.msg);
+                }
+            },
+            error : function() {
+                // view("异常！");
+                alert("异常！");
+            }
+        });
+    }
+
+</script>
+</body>
+
+</html>
