@@ -6,7 +6,7 @@ import java.util.*;
 /**
  * Created by user on 2016/7/10.
  */
-public class Main {
+public class Main2 {
     public int res(String input) {
         String flag_l = "{[(";
         String flag_r = "}])";
@@ -47,8 +47,8 @@ public class Main {
         }
     }
     public static void main(String args[]) {
-        Main r = null;
-        r = new Main();
+        Main2 r = null;
+        r = new Main2();
         Scanner sc = new Scanner(System.in);
         int f = sc.nextInt();
         while(f != 0) {
