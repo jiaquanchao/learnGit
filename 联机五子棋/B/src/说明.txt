@@ -1,0 +1,2 @@
+dll.txt记录玩家形象
+my_portrait.txt记录玩家头像
